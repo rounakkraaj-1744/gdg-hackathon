@@ -18,7 +18,7 @@ async def analyze_terms(request: AnalyzeRequest):
         print(f"[ANALYZE] Found {len(analyzed_clauses)} clauses")
 
         # 2. Build final structured response
-        final_response = build_final_response(analyzed_clauses)
+        final_response = await build_final_response(analyzed_clauses)
         print(f"[ANALYZE] Overall risk: {final_response.overall_risk}")
 
         return final_response

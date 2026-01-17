@@ -19,6 +19,10 @@ class AnalyzedClause(BaseModel):
     risk_level: Literal["HIGH", "MEDIUM", "LOW"]
     explanation: str
     user_impact: str
+    simple_explanation: str
+    example_scenario: str
+    action_tip: str
+    tags: List[str]
     references_law: bool
     law_reference: Optional[str] = None
 
@@ -29,9 +33,17 @@ class ClauseFlag(BaseModel):
     risk_level: Literal["HIGH", "MEDIUM", "LOW"]
     explanation: str
     user_impact: str
+    simple_explanation: str
+    example_scenario: str
+    action_tip: str
+    tags: List[str]
 
 
 class AnalyzeResponse(BaseModel):
     overall_risk: Literal["HIGH", "MEDIUM", "LOW"]
+    risk_score: int
+    confidence_score: str
+    what_you_give_up: List[str]
+    risk_patterns: List[str]
     summary: List[str]
     flags: List[ClauseFlag]

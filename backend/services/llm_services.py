@@ -63,12 +63,19 @@ CLAUSE_EXTRACTION_SYSTEM_PROMPT = """
 
 
 RISK_ANALYSIS_SYSTEM_PROMPT = """
-You are a legal risk interpretation engine designed for non-lawyers.
+You are a User Advocate and Privacy Expert.
 
-                    Your task is to analyze a legal clause and determine:
-                    1. Whether it is risky for the user
-                    2. Why it is risky
-                    3. What it practically means for the user
+                    Your task is to analyze a legal clause and translate it into practical reality for the user.
+                    You focus on clear, actionable insights rather than just legal translation.
+
+                    For each clause, you must determine:
+                    1. Risk Level: How dangerous is this?
+                    2. Explanation: Detailed reasoning.
+                    3. User Impact: What happens to the user?
+                    4. Simple Explanation: A one-sentence summary for a child.
+                    5. Example Scenario: A concrete real-world example of this going wrong.
+                    6. Action Tip: One specific thing the user should do to protect themselves.
+                    7. Tags: 2-4 keywords describing the clause topic (e.g., "Data Sharing", "No Refund").
 
                     Rules:
                     1. You are NOT a lawyer.
@@ -95,8 +102,12 @@ You are a legal risk interpretation engine designed for non-lawyers.
 
                     {
                     "risk_level": "HIGH | MEDIUM | LOW",
-                    "explanation": "Plain English explanation",
-                    "user_impact": "What this means for the user",
+                    "explanation": "Detailed explanation of why this is risky",
+                    "user_impact": "What this practically means for the user's rights or data",
+                    "simple_explanation": "A simple one-sentence explanation for non-experts",
+                    "example_scenario": "A real-world example (e.g. 'If you upload a photo, we can sell it')",
+                    "action_tip": "A specific action the user should take (e.g. 'Use a secondary email')",
+                    "tags": ["Tag1", "Tag2", "Tag3"],
                     "references_law": true | false,
                     "law_reference": "Name of law if mentioned, otherwise null"
                     }
@@ -201,5 +212,136 @@ async def analyze_clause_risk(clause: ExtractedClause) -> AnalyzedClause:
         explanation=parsed["explanation"],
         user_impact=parsed["user_impact"],
         references_law=parsed["references_law"],
-        law_reference=parsed.get("law_reference")
+        law_reference=parsed.get("law_reference"),
+        simple_explanation=parsed.get("simple_explanation", ""),
+        example_scenario=parsed.get("example_scenario", ""),
+        action_tip=parsed.get("action_tip", ""),
+        tags=parsed.get("tags") or []
     )
+
+
+SYNTHESIS_SYSTEM_PROMPT = """
+You are generating synthesized user-facing insights for a tool called “Red Flag Scanner”.
+
+Input:
+You will receive a list of flagged clauses. Each clause has:
+- category
+- risk_level (LOW, MEDIUM, HIGH)
+- explanation
+- user_impact
+
+Your task is to generate ONLY the following two sections:
+
+========================
+SECTION 1 (PRIMARY):
+What You Give Up by Clicking Agree
+========================
+
+Rules:
+- Consider ONLY clauses with risk_level HIGH or MEDIUM.
+- Focus on LOSS of user rights, control, or protections.
+- Map clauses to user-facing consequences (not clause descriptions).
+- Deduplicate overlapping ideas.
+- Output a MAXIMUM of 3 bullet points.
+- Use probabilistic language only (“may”, “could”, “might”).
+- Do NOT use absolute language (“will”, “guarantees”).
+- Do NOT mention laws, legality, or fairness.
+- Do NOT mention company intent.
+- Do NOT give advice.
+
+Tone:
+- Calm
+- Neutral
+- Plain English
+- User-impact focused
+
+Example output:
+“By accepting these terms, you may give up:
+• Control over your account access
+• The ability to resolve disputes in court
+• Control over how your personal data is shared”
+
+========================
+SECTION 2 (SECONDARY):
+Detected Risk Patterns
+========================
+
+Rules:
+- Deduplicate clause categories from the input.
+- Convert them into short, human-readable patterns.
+- Output as a short bullet list.
+- No explanations.
+- No risk levels.
+- No adjectives.
+
+Example output:
+“Detected Risk Patterns:
+• Forced arbitration
+• Unilateral termination
+• Broad data sharing”
+
+========================
+OUTPUT FORMAT (STRICT)
+========================
+
+Return ONLY valid JSON in this exact structure:
+
+{
+  "what_you_give_up": [
+    "string",
+    "string",
+    "string"
+  ],
+  "risk_patterns": [
+    "string",
+    "string"
+  ]
+}
+
+========================
+FINAL CONSTRAINTS
+========================
+
+- Do NOT restate clause explanations.
+- Do NOT summarize the document.
+- Do NOT invent new risks.
+- If fewer than 3 items exist, return fewer.
+- If unsure, prioritize restraint and clarity.
+"""
+
+async def synthesize_risk_report(analyzed_clauses: List[AnalyzedClause]) -> dict:
+    """
+    Synthesizes the examined clauses into a high-level summary report.
+    """
+    
+    # Filter for relevant clauses to save tokens
+    relevant_clauses = [
+        {
+            "category": c.category,
+            "risk_level": c.risk_level,
+            "explanation": c.explanation,
+            "user_impact": c.user_impact
+        }
+        for c in analyzed_clauses if c.risk_level in ["HIGH", "MEDIUM"]
+    ]
+
+    if not relevant_clauses:
+        return {
+            "what_you_give_up": ["No significant risks detected."],
+            "risk_patterns": ["Safe"]
+        }
+
+    user_input = json.dumps(relevant_clauses, indent=2)
+
+    try:
+        raw_output = await call_groq(
+            SYNTHESIS_SYSTEM_PROMPT,
+            user_input
+        )
+        return safe_json_parse(raw_output)
+    except Exception as e:
+        print(f"[ERROR] Synthesis failed: {e}")
+        return {
+            "what_you_give_up": ["Unable to generate summary due to error."],
+            "risk_patterns": ["Unknown"]
+        }
