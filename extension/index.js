@@ -138,6 +138,12 @@ function renderResults(data) {
                 actionTipHtml = `<p class="clause-action-tip"><span class="clause-action-label">💡 Tip:</span> ${escapeHtml(clause.action_tip)}</p>`;
             }
 
+            // Build example scenario HTML if available
+            let exampleHtml = '';
+            if (clause.example_scenario) {
+                exampleHtml = `<p class="clause-example"><span class="clause-example-label">Example:</span> ${escapeHtml(clause.example_scenario)}</p>`;
+            }
+
             li.innerHTML = `
                 <div class="clause-header">
                     <span class="clause-category">${escapeHtml(clause.category)}</span>
@@ -145,6 +151,7 @@ function renderResults(data) {
                 </div>
                 <p class="clause-explanation">${escapeHtml(clause.simple_explanation || clause.explanation)}</p>
                 <p class="clause-impact"><span class="clause-impact-label">Possible impact:</span> ${escapeHtml(clause.user_impact)}</p>
+                ${exampleHtml}
                 ${actionTipHtml}
                 ${tagsHtml}
             `;
