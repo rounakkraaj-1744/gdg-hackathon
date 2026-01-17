@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Flag Analyser</title>
+</head>
+
+<body>
+    <div class="popup-container">
+        <header class="header">
+            <h1 class="header-title">Red Flag Analyser</h1>
+            <p class="header-subtitle">AI-powered Terms & Conditions risk analysis</p>
+        </header>
+
+        <main class="main-content">
+            <button id="analyze-page-btn" class="btn btn-primary">
+                Analyze This Page .....
+            </button>
+
+            <div class="divider">
+                <span class="divider-text">or</span>
+            </div>
+
+            <textarea id="text-input" class="text-input"
+                placeholder="Paste Terms & Conditions text here (optional fallback)" rows="7"></textarea>
+
+            <button id="analyze-text-btn" class="btn btn-secondary">
+                Analyze Pasted Text
+            </button>
+        </main>
+
+        <div id="loading-state" class="loading-state hidden">
+            <div class="spinner"></div>
+            <p class="loading-text">Analyzing…</p>
+        </div>
+
+        <div id="error-state" class="error-state hidden">
+            <p class="error-message">Something went wrong. Please try again.</p>
+        </div>
+
+        <section id="results-section" class="results-section hidden">
+            <div class="risk-score-container">
+                <span class="risk-score-label">Overall Risk:</span>
+                <span id="risk-score-badge" class="risk-badge risk-high">HIGH</span>
+            </div>
+
+            <div class="flagged-clauses">
+                <h2 class="section-title">Flagged Clauses</h2>
+
+                <ul id="clauses-list" class="clauses-list">
+                    <li class="clause-card">
+                        <div class="clause-header">
+                            <span class="clause-category">Data Collection</span>
+                            <span class="risk-badge risk-high">HIGH</span>
+                        </div>
+                        <p class="clause-explanation">This clause allows broad data sharing with third parties.</p>
+                        <p class="clause-impact">Your personal data may be sold to advertisers.</p>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
