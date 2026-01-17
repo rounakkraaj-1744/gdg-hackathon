@@ -1,8 +1,6 @@
+backend/.gitignore
 /extension/manifest.json
 /extension/popup.css
-<<<<<<< Updated upstream
 /extension/popup.js
-=======
 /extension/popup.js
 /extension/manifest.json
->>>>>>> Stashed changes
