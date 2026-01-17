@@ -2,3 +2,5 @@ backend/.gitignore
 /extension/manifest.json
 /extension/popup.css
 /extension/popup.js
+/extension/popup.js
+/extension/manifest.json
