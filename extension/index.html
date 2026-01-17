@@ -12,45 +12,65 @@
     <div class="popup">
         <header class="header">
             <h1 class="title">Red Flag Scanner</h1>
-            <p class="subtitle">AI-powered Terms & Conditions risk analysis</p>
+            <p class="subtitle">Terms & Conditions risk awareness tool</p>
         </header>
 
         <main class="main">
             <section id="view-input" class="view">
                 <button id="btn-analyze-page" class="btn btn-primary">Analyze This Page</button>
                 <div class="divider"><span>or</span></div>
-                <textarea id="text-input" class="textarea"
-                    placeholder="Paste Terms & Conditions text here (optional fallback)"></textarea>
+                <textarea id="text-input" class="textarea" placeholder="Paste Terms & Conditions text here"></textarea>
                 <button id="btn-analyze-text" class="btn btn-secondary">Analyze Pasted Text</button>
             </section>
 
             <section id="view-loading" class="view view-center hidden">
-                <div class="spinner"></div>
-                <p class="status-text">Analyzing document…</p>
-                <p class="status-subtext">This may take a few seconds</p>
+                <div class="progress-bar">
+                    <div class="progress-bar-indeterminate"></div>
+                </div>
+                <p class="status-text">Reading document…</p>
+                <p class="status-subtext">This may take a moment</p>
             </section>
 
             <section id="view-error" class="view view-center hidden">
-                <p class="status-text">Unable to analyze this content.</p>
-                <p class="status-subtext">Make sure the backend server is running.</p>
+                <p class="status-text">Something went wrong.</p>
+                <p class="status-subtext">The document could not be analyzed. Please try again.</p>
                 <button id="btn-retry" class="btn btn-secondary btn-small">Try Again</button>
             </section>
 
             <section id="view-results" class="view hidden">
-                <div class="risk-banner">
-                    <span class="risk-label">Overall Risk:</span>
-                    <span id="overall-risk" class="badge badge-high">HIGH</span>
+
+                <div class="results-section results-section-primary">
+                    <h2 class="section-heading-large">What You May Give Up by Clicking Agree</h2>
+                    <p class="section-helper">These reflect potential impact if terms are enforced as written.</p>
+                    <ul id="give-up-list" class="give-up-list">
+                        <!-- Rendered by JS -->
+                    </ul>
                 </div>
 
-                <h2 class="section-heading">Key Findings</h2>
-                <ul id="summary-list" class="summary-list">
-                    <!-- Summary items rendered by JS -->
-                </ul>
+                <div class="results-section">
+                    <h2 class="section-heading">Detected Risk Patterns</h2>
+                    <ul id="risk-patterns-list" class="risk-patterns-list">
+                        <!-- Rendered by JS -->
+                    </ul>
+                </div>
 
-                <h2 class="section-heading">Flagged Clauses</h2>
-                <ul id="clauses-list" class="clauses-list">
-                    <!-- Clauses rendered by JS -->
-                </ul>
+                <div class="risk-indicator">
+                    <div class="risk-indicator-row">
+                        <span class="risk-indicator-label">Overall User Impact</span>
+                        <span id="overall-risk" class="badge badge-high">HIGH</span>
+                    </div>
+                    <p class="risk-indicator-note">This is not a judgment of legality or fairness.</p>
+                    <p id="risk-definition" class="risk-definition">
+                        <!-- Rendered by JS -->
+                    </p>
+                </div>
+
+                <div class="results-section">
+                    <h2 class="section-heading">Flagged Clauses</h2>
+                    <ul id="clauses-list" class="clauses-list">
+                        <!-- Rendered by JS -->
+                    </ul>
+                </div>
 
                 <button id="btn-new-analysis" class="btn btn-secondary">Start New Analysis</button>
             </section>
