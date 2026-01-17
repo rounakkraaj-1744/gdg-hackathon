@@ -1,0 +1,186 @@
+import os
+import json
+import httpx
+from typing import List
+from dotenv import load_dotenv
+
+from models.schemas import ExtractedClause, AnalyzedClause
+
+load_dotenv()
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = "gemini-2.5-pro"
+
+GEMINI_ENDPOINT = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+
+CLAUSE_EXTRACTION_SYSTEM_PROMPT = """
+            You are a legal document structure extraction engine.
+
+            Your task is to analyze raw Terms & Conditions or policy text and extract individual legal clauses.
+
+            Rules:
+            1. You are NOT a chatbot.
+            2. You do NOT explain anything.
+            3. You do NOT summarize.
+            4. You do NOT give legal advice.
+            5. You ONLY extract clauses and categorize them.
+            6. You MUST output valid JSON only.
+            7. You MUST NOT include markdown, comments, or extra text.
+            8. You MUST NOT hallucinate clauses that do not exist.
+            9. You MUST preserve the original wording of the clause.
+
+            Allowed categories:
+            - Data Privacy
+            - Liability
+            - Arbitration
+            - Payments
+            - Termination
+            - Intellectual Property
+            - Content Usage
+            - Account Control
+            - User Obligations
+            - Other
+
+            Output format:
+
+            [
+            {
+                "clause_id": "C1",
+                "category": "Data Privacy",
+                "text": "Exact clause text"
+            }
+            ]
+
+            If no meaningful legal clause is found, return [].
+
+            Return JSON ONLY.
+"""
+
+
+RISK_ANALYSIS_SYSTEM_PROMPT = """
+You are a legal risk interpretation engine designed for non-lawyers.
+
+                    Your task is to analyze a legal clause and determine:
+                    1. Whether it is risky for the user
+                    2. Why it is risky
+                    3. What it practically means for the user
+
+                    Rules:
+                    1. You are NOT a lawyer.
+                    2. You do NOT give legal advice.
+                    3. You do NOT judge legality.
+                    4. You do NOT suggest actions.
+                    5. You ONLY explain consequences.
+                    6. Use simple, non-technical language.
+                    7. Be neutral and factual.
+                    8. Do NOT hallucinate facts.
+                    9. Output valid JSON only.
+                    10. Do NOT include markdown or commentary.
+
+                    Risk levels must be ONE of:
+                    - HIGH
+                    - MEDIUM
+                    - LOW
+
+                    If a clause references a law, article, or regulation:
+                    - DO NOT explain the law
+                    - ONLY explain what it means for the user
+
+                    Output format:
+
+                    {
+                    "risk_level": "HIGH | MEDIUM | LOW",
+                    "explanation": "Plain English explanation",
+                    "user_impact": "What this means for the user",
+                    "references_law": true | false,
+                    "law_reference": "Name of law if mentioned, otherwise null"
+                    }
+
+                    Return JSON ONLY.
+"""
+
+async def call_gemini(system_prompt: str, user_content: str) -> str:
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [
+                    {
+                        "text": system_prompt + "\n\n" + user_content
+                    }
+                ]
+            }
+        ]
+    }
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(GEMINI_ENDPOINT, headers=headers, json=payload)
+
+        if response.status_code != 200:
+            raise Exception(f"Gemini API error: {response.text}")
+
+        data = response.json()
+
+        try:
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+        except Exception:
+            raise Exception("Invalid Gemini response format")
+
+def safe_json_parse(raw_text: str):
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError:
+        # Try to extract JSON substring
+        start = raw_text.find("{")
+        end = raw_text.rfind("}") + 1
+
+        if start != -1 and end != -1:
+            try:
+                return json.loads(raw_text[start:end])
+            except Exception:
+                pass
+
+        raise ValueError("Failed to parse JSON from LLM output")
+
+async def extract_clauses_from_chunk(chunk: str) -> List[ExtractedClause]:
+    raw_output = await call_gemini(
+        CLAUSE_EXTRACTION_SYSTEM_PROMPT,
+        chunk
+    )
+
+    parsed = safe_json_parse(raw_output)
+
+    clauses = []
+    for item in parsed:
+        clauses.append(ExtractedClause(**item))
+
+    return clauses
+
+async def analyze_clause_risk(clause: ExtractedClause) -> AnalyzedClause:
+    user_input = f"""
+                    Clause ID: {clause.clause_id}
+                    Category: {clause.category}
+                    Text: {clause.text}
+                """
+
+    raw_output = await call_gemini(
+        RISK_ANALYSIS_SYSTEM_PROMPT,
+        user_input
+    )
+
+    parsed = safe_json_parse(raw_output)
+
+    return AnalyzedClause(
+        clause_id=clause.clause_id,
+        clause=clause.text,
+        category=clause.category,
+        risk_level=parsed["risk_level"],
+        explanation=parsed["explanation"],
+        user_impact=parsed["user_impact"],
+        references_law=parsed["references_law"],
+        law_reference=parsed.get("law_reference")
+    )
