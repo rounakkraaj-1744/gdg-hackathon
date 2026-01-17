@@ -20,7 +20,7 @@ async def build_final_response(analyzed_clauses: List[AnalyzedClause]) -> Analyz
     return AnalyzeResponse(
         overall_risk=overall_risk,
         risk_score=risk_score,
-        confidence_score="85%",  # Placeholder until calibration logic is added
+        confidence_score=f"{synthesis.get('confidence_score', 85)}%",
         what_you_give_up=synthesis.get("what_you_give_up", []),
         risk_patterns=synthesis.get("risk_patterns", []),
         summary=summary,

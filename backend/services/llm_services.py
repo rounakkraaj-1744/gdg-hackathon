@@ -18,47 +18,97 @@ GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
 MAX_TEXT_LENGTH = 5000
 
 CLAUSE_EXTRACTION_SYSTEM_PROMPT = """
-            You are a legal document structure extraction engine.
+           You are a legal document clause extraction engine.
 
-            Your task is to analyze raw Terms & Conditions or policy text and extract individual legal clauses.
+Your task is to extract STRUCTURAL legal clauses from raw Terms & Conditions or policy text.
 
-            Rules:
-            1. You are NOT a chatbot.
-            2. You do NOT explain anything.
-            3. You do NOT summarize.
-            4. You do NOT give legal advice.
-            5. You ONLY extract clauses and categorize them.
-            6. You MUST output valid JSON only.
-            7. You MUST NOT include markdown, comments, or extra text.
-            8. You MUST NOT hallucinate clauses that do not exist.
-            9. You MUST preserve the original wording of the clause.
-            10. Extract at most 10 most important/risky clauses.
+This is a deterministic extraction task, not a judgment task.
 
-            Allowed categories:
-            - Data Privacy
-            - Liability
-            - Arbitration
-            - Payments
-            - Termination
-            - Intellectual Property
-            - Content Usage
-            - Account Control
-            - User Obligations
-            - Other
+========================
+STRICT RULES (MANDATORY)
+========================
 
-            Output format:
+1. You are NOT a chatbot.
+2. You do NOT explain anything.
+3. You do NOT summarize.
+4. You do NOT judge risk or importance.
+5. You do NOT give legal advice.
+6. You ONLY extract clauses that already exist in the text.
+7. You MUST preserve the original wording of each clause.
+8. You MUST output valid JSON only.
+9. You MUST NOT include markdown, comments, or extra text.
+10. You MUST NOT hallucinate clauses.
+11. You MUST return clauses in the SAME ORDER they appear in the document.
+12. Each clause must map to EXACTLY ONE category from the allowed list.
+13. Do NOT merge clauses.
+14. Do NOT split clauses.
+15. Extract ALL clauses that match the allowed categories, up to a MAXIMUM of 6 clauses.
+16. If more than 6 matching clauses exist, return the FIRST 6 in document order.
 
-            [
-            {
-                "clause_id": "C1",
-                "category": "Data Privacy",
-                "text": "Exact clause text"
-            }
-            ]
+========================
+ALLOWED CATEGORIES (CLOSED LIST)
+========================
 
-            If no meaningful legal clause is found, return [].
+- Data Privacy
+- Liability
+- Arbitration
+- Payments
+- Termination
+- Intellectual Property
+- Content Usage
+- Account Control
+- User Obligations
+- Other
 
-            Return JSON ONLY.
+========================
+WHAT COUNTS AS A CLAUSE
+========================
+
+A clause is a sentence or paragraph that:
+- Grants rights to the company, OR
+- Limits user rights or remedies, OR
+- Imposes obligations on the user, OR
+- Controls account access, content, payments, data, or dispute resolution.
+
+Ignore:
+- Definitions
+- Headings without substance
+- Marketing or descriptive text
+
+========================
+OUTPUT FORMAT (STRICT)
+========================
+
+Return ONLY a JSON array in this exact format:
+
+[
+  {
+    "clause_id": "C1",
+    "category": "Termination",
+    "text": "Exact clause text as written in the document"
+  },
+  {
+    "clause_id": "C2",
+    "category": "Data Privacy",
+    "text": "Exact clause text as written in the document"
+  }
+]
+
+========================
+EDGE CASES
+========================
+
+- If no clauses match the allowed categories, return [].
+- Do NOT invent clause IDs beyond sequential numbering (C1, C2, C3…).
+- Do NOT skip numbering.
+- Do NOT restate or paraphrase text.
+
+========================
+FINAL INSTRUCTION
+========================
+
+Return JSON ONLY.
+Do not include any explanation, commentary, or additional text.
 """
 
 
@@ -295,7 +345,8 @@ Return ONLY valid JSON in this exact structure:
   "risk_patterns": [
     "string",
     "string"
-  ]
+  ],
+  "confidence_score": 85
 }
 
 ========================
@@ -307,6 +358,7 @@ FINAL CONSTRAINTS
 - Do NOT invent new risks.
 - If fewer than 3 items exist, return fewer.
 - If unsure, prioritize restraint and clarity.
+- "confidence_score" must be an integer between 0 and 100. It represents your certainty that the flagged risks are accurately interpreted from the text provided. Lower it if the text is ambiguous or fragmented.
 """
 
 async def synthesize_risk_report(analyzed_clauses: List[AnalyzedClause]) -> dict:
@@ -328,7 +380,8 @@ async def synthesize_risk_report(analyzed_clauses: List[AnalyzedClause]) -> dict
     if not relevant_clauses:
         return {
             "what_you_give_up": ["No significant risks detected."],
-            "risk_patterns": ["Safe"]
+            "risk_patterns": ["Safe"],
+            "confidence_score": 95
         }
 
     user_input = json.dumps(relevant_clauses, indent=2)
@@ -343,5 +396,6 @@ async def synthesize_risk_report(analyzed_clauses: List[AnalyzedClause]) -> dict
         print(f"[ERROR] Synthesis failed: {e}")
         return {
             "what_you_give_up": ["Unable to generate summary due to error."],
-            "risk_patterns": ["Unknown"]
+            "risk_patterns": ["Unknown"],
+            "confidence_score": 50
         }

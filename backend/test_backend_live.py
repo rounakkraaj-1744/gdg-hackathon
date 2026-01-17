@@ -59,6 +59,7 @@ async def run_test():
         print(f"[{'PASSED' if has_give_up else 'FAILED'}] 'What You Give Up' Section Present")
         print(f"[{'PASSED' if has_patterns else 'FAILED'}] 'Risk Patterns' Section Present")
         print(f"[{'PASSED' if has_score else 'FAILED'}] Risk Score Present ({result.get('risk_score', 'N/A')})")
+        print(f"[{'PASSED' if 'confidence_score' in result else 'FAILED'}] Confidence Score: {result.get('confidence_score', 'N/A')}")
 
     except Exception as e:
         print(f"\n❌ Test Failed: {str(e)}")
