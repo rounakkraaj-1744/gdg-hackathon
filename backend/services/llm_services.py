@@ -1,6 +1,7 @@
 import os
 import json
 import httpx
+import asyncio
 from typing import List
 from dotenv import load_dotenv
 
@@ -9,9 +10,12 @@ from schemas.schemas import ExtractedClause, AnalyzedClause
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "llama-3.3-70b-versatile"  # Best model for legal analysis
 
 GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
+
+# Reduced for strict free tier limits
+MAX_TEXT_LENGTH = 5000
 
 CLAUSE_EXTRACTION_SYSTEM_PROMPT = """
             You are a legal document structure extraction engine.
@@ -28,6 +32,7 @@ CLAUSE_EXTRACTION_SYSTEM_PROMPT = """
             7. You MUST NOT include markdown, comments, or extra text.
             8. You MUST NOT hallucinate clauses that do not exist.
             9. You MUST preserve the original wording of the clause.
+            10. Extract at most 10 most important/risky clauses.
 
             Allowed categories:
             - Data Privacy
@@ -99,7 +104,7 @@ You are a legal risk interpretation engine designed for non-lawyers.
                     Return JSON ONLY.
 """
 
-async def call_groq(system_prompt: str, user_content: str) -> str:
+async def call_groq(system_prompt: str, user_content: str, max_retries: int = 3) -> str:
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {GROQ_API_KEY}"
@@ -117,22 +122,32 @@ async def call_groq(system_prompt: str, user_content: str) -> str:
                 "content": user_content
             }
         ],
-        "temperature": 0.1,
+        "temperature": 0,  # Deterministic outputs for consistency
         "max_tokens": 4096
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(GROQ_ENDPOINT, headers=headers, json=payload)
+    for attempt in range(max_retries):
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(GROQ_ENDPOINT, headers=headers, json=payload)
 
-        if response.status_code != 200:
-            raise Exception(f"Groq API error: {response.text}")
+            if response.status_code == 429:
+                # Rate limited - wait longer for reset (limit is per minute)
+                wait_time = (attempt + 1) * 15  # 15s, 30s, 45s
+                print(f"[GROQ] Rate limited, waiting {wait_time}s before retry {attempt + 1}/{max_retries}")
+                await asyncio.sleep(wait_time)
+                continue
 
-        data = response.json()
+            if response.status_code != 200:
+                raise Exception(f"Groq API error: {response.text}")
 
-        try:
-            return data["choices"][0]["message"]["content"]
-        except Exception:
-            raise Exception("Invalid Groq response format")
+            data = response.json()
+
+            try:
+                return data["choices"][0]["message"]["content"]
+            except Exception:
+                raise Exception("Invalid Groq response format")
+    
+    raise Exception("Max retries exceeded due to rate limiting")
 
 def safe_json_parse(raw_text: str):
     try:
