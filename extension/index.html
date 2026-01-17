@@ -4,65 +4,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Red Flag Analyser</title>
+    <title>Red Flag Scanner</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <div class="popup-container">
+    <div class="popup">
         <header class="header">
-            <h1 class="header-title">Red Flag Analyser</h1>
-            <p class="header-subtitle">AI-powered Terms & Conditions risk analysis</p>
+            <h1 class="title">Red Flag Scanner</h1>
+            <p class="subtitle">AI-powered Terms & Conditions risk analysis</p>
         </header>
 
-        <main class="main-content">
-            <button id="analyze-page-btn" class="btn btn-primary">
-                Analyze This Page .....
-            </button>
+        <main class="main">
+            <section id="view-input" class="view">
+                <button id="btn-analyze-page" class="btn btn-primary">Analyze This Page</button>
+                <div class="divider"><span>or</span></div>
+                <textarea id="text-input" class="textarea"
+                    placeholder="Paste Terms & Conditions text here (optional fallback)"></textarea>
+                <button id="btn-analyze-text" class="btn btn-secondary">Analyze Pasted Text</button>
+            </section>
 
-            <div class="divider">
-                <span class="divider-text">or</span>
-            </div>
+            <section id="view-loading" class="view view-center hidden">
+                <p class="status-text">Analyzing…</p>
+            </section>
 
-            <textarea id="text-input" class="text-input"
-                placeholder="Paste Terms & Conditions text here (optional fallback)" rows="7"></textarea>
+            <section id="view-error" class="view view-center hidden">
+                <p class="status-text">Unable to analyze this content. Please try again.</p>
+                <button id="btn-retry" class="btn btn-secondary btn-small">Try Again</button>
+            </section>
 
-            <button id="analyze-text-btn" class="btn btn-secondary">
-                Analyze Pasted Text
-            </button>
-        </main>
+            <section id="view-results" class="view hidden">
+                <div class="risk-banner">
+                    <span class="risk-label">Overall Risk:</span>
+                    <span id="overall-risk" class="badge badge-high">HIGH</span>
+                </div>
 
-        <div id="loading-state" class="loading-state hidden">
-            <div class="spinner"></div>
-            <p class="loading-text">Analyzing…</p>
-        </div>
-
-        <div id="error-state" class="error-state hidden">
-            <p class="error-message">Something went wrong. Please try again.</p>
-        </div>
-
-        <section id="results-section" class="results-section hidden">
-            <div class="risk-score-container">
-                <span class="risk-score-label">Overall Risk:</span>
-                <span id="risk-score-badge" class="risk-badge risk-high">HIGH</span>
-            </div>
-
-            <div class="flagged-clauses">
-                <h2 class="section-title">Flagged Clauses</h2>
+                <h2 class="section-heading">Flagged Clauses</h2>
 
                 <ul id="clauses-list" class="clauses-list">
                     <li class="clause-card">
                         <div class="clause-header">
-                            <span class="clause-category">Data Collection</span>
-                            <span class="risk-badge risk-high">HIGH</span>
+                            <span class="clause-category">Data Privacy</span>
+                            <span class="badge badge-high">HIGH</span>
                         </div>
-                        <p class="clause-explanation">This clause allows broad data sharing with third parties.</p>
-                        <p class="clause-impact">Your personal data may be sold to advertisers.</p>
+                        <p class="clause-text">This clause grants the company irrevocable rights to sell user data to
+                            third-party advertisers without explicit consent.</p>
+                    </li>
+                    <li class="clause-card">
+                        <div class="clause-header">
+                            <span class="clause-category">Liability</span>
+                            <span class="badge badge-medium">MEDIUM</span>
+                        </div>
+                        <p class="clause-text">Limits company liability to $50 regardless of the extent of damages
+                            caused by service failure.</p>
+                    </li>
+                    <li class="clause-card">
+                        <div class="clause-header">
+                            <span class="clause-category">Termination</span>
+                            <span class="badge badge-low">LOW</span>
+                        </div>
+                        <p class="clause-text">Requires 30-day written notice for account cancellation, which is
+                            standard but creates minor friction.</p>
                     </li>
                 </ul>
-            </div>
-        </section>
-    </div>
 
-    // attach scripts file
+                <button id="btn-new-analysis" class="btn btn-secondary">Start New Analysis</button>
+            </section>
+        </main>
+
+        <footer class="footer">Internal Compliance Tool v1.0</footer>
+    </div>
+    <script src="index.js"></script>
 </body>
+
 </html>
