@@ -4,14 +4,14 @@ import httpx
 from typing import List
 from dotenv import load_dotenv
 
-from models.schemas import ExtractedClause, AnalyzedClause
+from schemas.schemas import ExtractedClause, AnalyzedClause
 
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = "gemini-2.5-pro"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
-GEMINI_ENDPOINT = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
 
 CLAUSE_EXTRACTION_SYSTEM_PROMPT = """
             You are a legal document structure extraction engine.
@@ -99,36 +99,40 @@ You are a legal risk interpretation engine designed for non-lawyers.
                     Return JSON ONLY.
 """
 
-async def call_gemini(system_prompt: str, user_content: str) -> str:
+async def call_groq(system_prompt: str, user_content: str) -> str:
     headers = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {GROQ_API_KEY}"
     }
 
     payload = {
-        "contents": [
+        "model": GROQ_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
             {
                 "role": "user",
-                "parts": [
-                    {
-                        "text": system_prompt + "\n\n" + user_content
-                    }
-                ]
+                "content": user_content
             }
-        ]
+        ],
+        "temperature": 0.1,
+        "max_tokens": 4096
     }
 
     async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(GEMINI_ENDPOINT, headers=headers, json=payload)
+        response = await client.post(GROQ_ENDPOINT, headers=headers, json=payload)
 
         if response.status_code != 200:
-            raise Exception(f"Gemini API error: {response.text}")
+            raise Exception(f"Groq API error: {response.text}")
 
         data = response.json()
 
         try:
-            return data["candidates"][0]["content"]["parts"][0]["text"]
+            return data["choices"][0]["message"]["content"]
         except Exception:
-            raise Exception("Invalid Gemini response format")
+            raise Exception("Invalid Groq response format")
 
 def safe_json_parse(raw_text: str):
     try:
@@ -147,7 +151,7 @@ def safe_json_parse(raw_text: str):
         raise ValueError("Failed to parse JSON from LLM output")
 
 async def extract_clauses_from_chunk(chunk: str) -> List[ExtractedClause]:
-    raw_output = await call_gemini(
+    raw_output = await call_groq(
         CLAUSE_EXTRACTION_SYSTEM_PROMPT,
         chunk
     )
@@ -167,7 +171,7 @@ async def analyze_clause_risk(clause: ExtractedClause) -> AnalyzedClause:
                     Text: {clause.text}
                 """
 
-    raw_output = await call_gemini(
+    raw_output = await call_groq(
         RISK_ANALYSIS_SYSTEM_PROMPT,
         user_input
     )

@@ -1,0 +1,66 @@
+﻿{
+    "overall_risk":  "HIGH",
+    "summary":  [
+                    "This means that the user\u0027s personal information may be used in ways they are not aware of or do not agree with, and the user may not have control over how their data is handled once it is shared with third parties.",
+                    "You will lose control over how your content is used, and you won\u0027t be able to stop the service from using it or making money from it, even if you stop using the service.",
+                    "You could lose access to your account and the service without notice, which could cause inconvenience or loss of important information."
+                ],
+    "flags":  [
+                  {
+                      "clause":  "We may collect personal information including but not limited to your name, email address, device identifiers, IP address, location data, and usage activity. Such data may be processed, stored, or shared with third-party partners for analytics, advertising, or service improvement purposes. We are not responsible for how third parties handle your data once shared.",
+                      "category":  "Data Privacy",
+                      "risk_level":  "HIGH",
+                      "explanation":  "The company can collect a wide range of personal information and share it with other companies, which may use it for various purposes. The company does not guarantee how these other companies will protect or use the shared data.",
+                      "user_impact":  "This means that the user\u0027s personal information may be used in ways they are not aware of or do not agree with, and the user may not have control over how their data is handled once it is shared with third parties."
+                  },
+                  {
+                      "clause":  "By submitting any content to the Service, you grant us a perpetual, irrevocable, worldwide, royalty-free license to use, modify, reproduce, distribute, and create derivative works from such content in any form or media.",
+                      "category":  "Content Usage",
+                      "risk_level":  "HIGH",
+                      "explanation":  "This clause means that when you submit content, you are giving the service permission to use it in any way they want, forever, without paying you or asking for your approval.",
+                      "user_impact":  "You will lose control over how your content is used, and you won\u0027t be able to stop the service from using it or making money from it, even if you stop using the service."
+                  },
+                  {
+                      "clause":  "We reserve the right to suspend or terminate your account at any time, with or without notice, for any reason, including but not limited to violation of these Terms or suspected misuse of the Service.",
+                      "category":  "Termination",
+                      "risk_level":  "HIGH",
+                      "explanation":  "This clause means that the company can stop you from using their service at any time, without warning, and for any reason they think is valid.",
+                      "user_impact":  "You could lose access to your account and the service without notice, which could cause inconvenience or loss of important information."
+                  },
+                  {
+                      "clause":  "To the maximum extent permitted by law, the Company shall not be liable for any indirect, incidental, consequential, or punitive damages, including loss of profits, data, or goodwill, arising out of or related to your use of the Service.",
+                      "category":  "Liability",
+                      "risk_level":  "HIGH",
+                      "explanation":  "This clause means the Company is trying to limit its responsibility for any damages or losses you might experience while using their Service. It\u0027s saying they won\u0027t be held accountable for many types of damages, even if their Service causes you problems.",
+                      "user_impact":  "If something goes wrong with the Service and you lose money, data, or business reputation, the Company is unlikely to compensate you for these losses. You might not be able to get back what you\u0027ve lost."
+                  },
+                  {
+                      "clause":  "You agree to indemnify and hold harmless the Company, its directors, employees, and affiliates from any claims, damages, losses, or expenses arising from your use of the Service or violation of these Terms.",
+                      "category":  "Other",
+                      "risk_level":  "HIGH",
+                      "explanation":  "This clause means that if someone makes a claim or takes legal action against the Company because of something you did while using the Service, you will be responsible for paying any damages or costs.",
+                      "user_impact":  "You could be held financially responsible for any mistakes or wrongdoing you commit while using the Service, which could lead to significant financial losses."
+                  },
+                  {
+                      "clause":  "Any disputes arising under or in connection with these Terms shall be resolved exclusively through binding arbitration under the Arbitration and Conciliation Act, 1996. You waive any right to participate in a class action lawsuit. These Terms shall be governed by the laws of India.",
+                      "category":  "Arbitration",
+                      "risk_level":  "HIGH",
+                      "explanation":  "This clause means that if there\u0027s a dispute, it will be resolved through arbitration, not in a court. This can limit your ability to take legal action and may favor the other party. You also give up the right to join a group lawsuit.",
+                      "user_impact":  "You may have limited options for resolving disputes and may not be able to join a group lawsuit, which could affect your ability to seek compensation or justice."
+                  },
+                  {
+                      "clause":  "We may update or modify these Terms at any time at our sole discretion. Continued use of the Service after such changes constitutes acceptance of the revised Terms.",
+                      "category":  "Other",
+                      "risk_level":  "HIGH",
+                      "explanation":  "The company can change the rules of the service at any time without needing your approval, and if you keep using the service, it means you agree to the new rules.",
+                      "user_impact":  "You might be bound by new terms that you don\u0027t like or agree with, and you won\u0027t be able to opt out of the changes unless you stop using the service."
+                  },
+                  {
+                      "clause":  "The Service is provided on an \u0027as is\u0027 and \u0027as available\u0027 basis, without warranties of any kind, either express or implied, including warranties of merchantability or fitness for a particular purpose.",
+                      "category":  "Other",
+                      "risk_level":  "HIGH",
+                      "explanation":  "This clause means that the service provider is not making any promises about the quality or performance of the service. It\u0027s being provided without any guarantees that it will work as expected or meet the user\u0027s needs.",
+                      "user_impact":  "This means that if the service doesn\u0027t work properly or doesn\u0027t meet the user\u0027s expectations, the user may not have any recourse or be able to get a refund or compensation."
+                  }
+              ]
+}

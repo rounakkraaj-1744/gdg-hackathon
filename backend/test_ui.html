@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T&C Risk Analyzer - Backend Tester</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #fff; margin-bottom: 8px; }
+        .subtitle { color: #888; margin-bottom: 24px; }
+        
+        /* Layout */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        
+        .panel {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #0f3460;
+        }
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        
+        /* Input Section */
+        .sample-select {
+            width: 100%;
+            padding: 10px;
+            background: #0f3460;
+            border: 1px solid #1a1a4e;
+            color: #fff;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .text-input {
+            width: 100%;
+            height: 200px;
+            padding: 12px;
+            background: #0f3460;
+            border: 1px solid #1a1a4e;
+            color: #fff;
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .text-input::placeholder { color: #666; }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 12px;
+        }
+        .btn-primary {
+            background: #e94560;
+            color: #fff;
+        }
+        .btn-primary:hover { background: #ff6b6b; }
+        .btn-primary:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        
+        /* Loading */
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #888;
+        }
+        .loading.active { display: flex; }
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #333;
+            border-top-color: #e94560;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Error */
+        .error {
+            display: none;
+            background: #4a1a1a;
+            border: 1px solid #e94560;
+            padding: 12px;
+            border-radius: 4px;
+            color: #ff6b6b;
+            margin-top: 12px;
+        }
+        .error.active { display: block; }
+        
+        /* Risk Badge */
+        .risk-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .risk-badge {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .risk-HIGH { background: #e94560; color: #fff; }
+        .risk-MEDIUM { background: #f39c12; color: #000; }
+        .risk-LOW { background: #27ae60; color: #fff; }
+        
+        /* Summary */
+        .summary-list {
+            list-style: none;
+            margin-bottom: 16px;
+        }
+        .summary-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #0f3460;
+            color: #ccc;
+        }
+        .summary-list li:before {
+            content: "⚠️ ";
+        }
+        
+        /* Flags */
+        .flag-card {
+            background: #0f3460;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid #e94560;
+        }
+        .flag-card.risk-MEDIUM { border-left-color: #f39c12; }
+        .flag-card.risk-LOW { border-left-color: #27ae60; }
+        .flag-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .flag-category {
+            background: #1a1a4e;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #888;
+        }
+        .flag-risk {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .flag-clause {
+            font-size: 13px;
+            color: #aaa;
+            font-style: italic;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #16213e;
+            border-radius: 4px;
+        }
+        .flag-explanation {
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .flag-impact {
+            color: #e94560;
+            font-size: 13px;
+        }
+        
+        /* Debug Panel */
+        .debug-toggle {
+            background: none;
+            border: 1px solid #333;
+            color: #888;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+        .debug-toggle:hover { border-color: #555; color: #aaa; }
+        .debug-content {
+            display: none;
+            background: #0a0a15;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow: auto;
+        }
+        .debug-content.active { display: block; }
+        .debug-label {
+            color: #e94560;
+            font-weight: bold;
+            margin-top: 12px;
+            margin-bottom: 4px;
+        }
+        .debug-label:first-child { margin-top: 0; }
+        .debug-value {
+            color: #888;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        /* Validation */
+        .validation-btn {
+            background: #1a1a4e;
+            border: 1px solid #333;
+            color: #888;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 16px;
+            width: 100%;
+        }
+        .validation-btn:hover { border-color: #555; }
+        .validation-checklist {
+            display: none;
+            margin-top: 12px;
+            background: #0f3460;
+            padding: 12px;
+            border-radius: 4px;
+        }
+        .validation-checklist.active { display: block; }
+        .validation-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            color: #ccc;
+        }
+        .validation-item input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        /* Warnings */
+        .warnings {
+            margin-top: 16px;
+        }
+        .warning-item {
+            background: #4a3a1a;
+            border: 1px solid #f39c12;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            color: #f39c12;
+            font-size: 13px;
+        }
+        .warning-item:before {
+            content: "⚠️ ";
+        }
+        
+        /* Results hidden by default */
+        .results { display: none; }
+        .results.active { display: block; }
+        
+        /* Response time */
+        .response-time {
+            color: #27ae60;
+            font-size: 12px;
+            margin-left: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 T&C Risk Analyzer - Backend Tester</h1>
+        <p class="subtitle">Test the AI backend with real-world legal text</p>
+        
+        <div class="grid">
+            <!-- Left: Input Panel -->
+            <div class="panel">
+                <div class="panel-title">Input</div>
+                
+                <select id="sampleSelect" class="sample-select">
+                    <option value="">-- Select Sample Test Data --</option>
+                    <option value="google">Google Terms of Service</option>
+                    <option value="instagram">Instagram Privacy Policy</option>
+                    <option value="amazon">Amazon User Agreement</option>
+                </select>
+                
+                <textarea id="textInput" class="text-input" placeholder="Paste Terms & Conditions text here or select a sample above..."></textarea>
+                
+                <button id="analyzeBtn" class="btn btn-primary">🚀 Analyze Text</button>
+                
+                <div id="errorBox" class="error"></div>
+            </div>
+            
+            <!-- Right: Results Panel -->
+            <div class="panel">
+                <div class="panel-title">Results</div>
+                
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <span>Analyzing with AI...</span>
+                </div>
+                
+                <div id="results" class="results">
+                    <div class="risk-container">
+                        <span>Overall Risk:</span>
+                        <span id="riskBadge" class="risk-badge risk-HIGH">HIGH</span>
+                        <span id="responseTime" class="response-time"></span>
+                    </div>
+                    
+                    <div class="panel-title" style="margin-top: 16px;">Summary</div>
+                    <ul id="summaryList" class="summary-list"></ul>
+                    
+                    <div class="panel-title">Flagged Clauses</div>
+                    <div id="flagsList"></div>
+                    
+                    <!-- Warnings -->
+                    <div id="warnings" class="warnings"></div>
+                    
+                    <!-- Validation Mode -->
+                    <button id="validationBtn" class="validation-btn">
+                        🤔 Is this output understandable to a normal user?
+                    </button>
+                    <div id="validationChecklist" class="validation-checklist">
+                        <div class="validation-item">
+                            <input type="checkbox" id="v1">
+                            <label for="v1">Is the explanation simple?</label>
+                        </div>
+                        <div class="validation-item">
+                            <input type="checkbox" id="v2">
+                            <label for="v2">Is the risk obvious?</label>
+                        </div>
+                        <div class="validation-item">
+                            <input type="checkbox" id="v3">
+                            <label for="v3">Would a user know what to do?</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Debug Panel -->
+        <div class="panel" style="margin-top: 20px;">
+            <button id="debugToggle" class="debug-toggle">🐛 Toggle Debug Panel</button>
+            <div id="debugContent" class="debug-content">
+                <div class="debug-label">Request Payload:</div>
+                <div id="debugRequest" class="debug-value">-</div>
+                
+                <div class="debug-label">Response Time:</div>
+                <div id="debugTime" class="debug-value">-</div>
+                
+                <div class="debug-label">Raw JSON Response:</div>
+                <div id="debugResponse" class="debug-value">-</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample test data
+        const SAMPLES = {
+            google: `By using our Services, you agree that Google can use such data in accordance with our privacy policies. When you upload, submit, store, send or receive content to or through our Services, you give Google (and those we work with) a worldwide license to use, host, store, reproduce, modify, create derivative works, communicate, publish, publicly perform, publicly display and distribute such content. This license continues even if you stop using our Services. Google may modify or discontinue the Services at any time without notice. We may also place limits on certain features and services.`,
+            
+            instagram: `You grant us a non-exclusive, royalty-free, transferable, sub-licensable, worldwide license to host, use, distribute, modify, run, copy, publicly perform or display, translate, and create derivative works of your content. This license will end when your content is deleted from our systems. We can share your information with companies that are legally part of the same group of companies that Instagram is part of. We may also share information about you with third-party partners who help us provide and improve our Products.`,
+            
+            amazon: `We may send you promotional communications, such as information about products, services, and events, offered by us, other Amazon companies, and third parties. You may opt out of receiving promotional communications from us by following the instructions in those messages. We may collect information about your location, including GPS signals, device sensors, Wi-Fi access points, and cell tower information. Amazon reserves the right to change any of our fees or billing methods at any time. Such changes will be effective when posted.`
+        };
+
+        // API Configuration
+        const API_URL = 'http://localhost:8000/analyze';
+
+        // DOM Elements
+        const sampleSelect = document.getElementById('sampleSelect');
+        const textInput = document.getElementById('textInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const errorBox = document.getElementById('errorBox');
+        const riskBadge = document.getElementById('riskBadge');
+        const summaryList = document.getElementById('summaryList');
+        const flagsList = document.getElementById('flagsList');
+        const warnings = document.getElementById('warnings');
+        const responseTime = document.getElementById('responseTime');
+        const debugToggle = document.getElementById('debugToggle');
+        const debugContent = document.getElementById('debugContent');
+        const debugRequest = document.getElementById('debugRequest');
+        const debugTime = document.getElementById('debugTime');
+        const debugResponse = document.getElementById('debugResponse');
+        const validationBtn = document.getElementById('validationBtn');
+        const validationChecklist = document.getElementById('validationChecklist');
+
+        // Load sample on select
+        sampleSelect.addEventListener('change', () => {
+            const key = sampleSelect.value;
+            if (key && SAMPLES[key]) {
+                textInput.value = SAMPLES[key];
+            }
+        });
+
+        // Toggle debug
+        debugToggle.addEventListener('click', () => {
+            debugContent.classList.toggle('active');
+        });
+
+        // Toggle validation
+        validationBtn.addEventListener('click', () => {
+            validationChecklist.classList.toggle('active');
+        });
+
+        // Analyze
+        analyzeBtn.addEventListener('click', async () => {
+            const text = textInput.value.trim();
+            if (!text) {
+                showError('Please enter or paste some text to analyze.');
+                return;
+            }
+
+            // Reset UI
+            hideError();
+            results.classList.remove('active');
+            loading.classList.add('active');
+            analyzeBtn.disabled = true;
+
+            const payload = { text };
+            debugRequest.textContent = JSON.stringify(payload, null, 2);
+
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const endTime = performance.now();
+                const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Debug info
+                debugTime.textContent = `${elapsed}s`;
+                debugResponse.textContent = JSON.stringify(data, null, 2);
+                responseTime.textContent = `(${elapsed}s)`;
+
+                // Display results
+                displayResults(data);
+
+            } catch (err) {
+                debugTime.textContent = 'Failed';
+                debugResponse.textContent = err.message;
+                showError(`Backend error: ${err.message}`);
+            } finally {
+                loading.classList.remove('active');
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            // Risk badge
+            riskBadge.className = `risk-badge risk-${data.overall_risk}`;
+            riskBadge.textContent = data.overall_risk;
+
+            // Summary
+            summaryList.innerHTML = '';
+            if (data.summary && data.summary.length > 0) {
+                data.summary.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    summaryList.appendChild(li);
+                });
+            } else {
+                summaryList.innerHTML = '<li style="color: #888;">No summary provided</li>';
+            }
+
+            // Flags
+            flagsList.innerHTML = '';
+            if (data.flags && data.flags.length > 0) {
+                data.flags.forEach(flag => {
+                    const card = document.createElement('div');
+                    card.className = `flag-card risk-${flag.risk_level}`;
+                    card.innerHTML = `
+                        <div class="flag-header">
+                            <span class="flag-category">${flag.category}</span>
+                            <span class="flag-risk risk-badge risk-${flag.risk_level}">${flag.risk_level}</span>
+                        </div>
+                        <div class="flag-clause">"${flag.clause}"</div>
+                        <div class="flag-explanation">${flag.explanation}</div>
+                        <div class="flag-impact">👤 ${flag.user_impact}</div>
+                    `;
+                    flagsList.appendChild(card);
+                });
+            } else {
+                flagsList.innerHTML = '<p style="color: #888;">No flagged clauses</p>';
+            }
+
+            // Check for issues
+            checkForIssues(data);
+
+            results.classList.add('active');
+        }
+
+        function checkForIssues(data) {
+            warnings.innerHTML = '';
+            const issues = [];
+
+            // Empty summary
+            if (!data.summary || data.summary.length === 0) {
+                issues.push('Empty summary - the AI did not generate any summary points.');
+            }
+
+            // High risk but no flags
+            if (data.overall_risk === 'HIGH' && (!data.flags || data.flags.length === 0)) {
+                issues.push('High risk reported but no flagged clauses - contradictory output.');
+            }
+
+            // Low risk but many high-risk flags
+            if (data.overall_risk === 'LOW' && data.flags) {
+                const highFlags = data.flags.filter(f => f.risk_level === 'HIGH').length;
+                if (highFlags >= 2) {
+                    issues.push(`Low overall risk but ${highFlags} HIGH-risk flags - conflicting assessment.`);
+                }
+            }
+
+            // Check for technical jargon
+            const technicalTerms = ['indemnify', 'liability', 'arbitration', 'jurisdiction', 'waiver', 'severability'];
+            if (data.flags) {
+                data.flags.forEach((flag, i) => {
+                    const text = (flag.explanation + ' ' + flag.user_impact).toLowerCase();
+                    technicalTerms.forEach(term => {
+                        if (text.includes(term)) {
+                            issues.push(`Flag #${i + 1} uses technical term "${term}" - may confuse users.`);
+                        }
+                    });
+                });
+            }
+
+            // Check for duplicate clauses
+            if (data.flags && data.flags.length > 1) {
+                const clauses = data.flags.map(f => f.clause.toLowerCase().trim());
+                const seen = new Set();
+                clauses.forEach((c, i) => {
+                    if (seen.has(c)) {
+                        issues.push(`Duplicate clause detected in flag #${i + 1}.`);
+                    }
+                    seen.add(c);
+                });
+            }
+
+            // Display warnings
+            issues.forEach(issue => {
+                const div = document.createElement('div');
+                div.className = 'warning-item';
+                div.textContent = issue;
+                warnings.appendChild(div);
+            });
+        }
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.classList.add('active');
+        }
+
+        function hideError() {
+            errorBox.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
