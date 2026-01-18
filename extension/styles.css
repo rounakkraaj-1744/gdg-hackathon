@@ -550,36 +550,42 @@ body {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
 }
 
 .clause-card {
-    padding: 16px 18px;
+    padding: 18px 20px;
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.15s ease;
+}
+
+.clause-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .clause-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .clause-category {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.5px;
     color: var(--text-secondary);
 }
 
 .clause-explanation {
     font-size: 13px;
     color: var(--text-primary);
-    line-height: 1.6;
-    margin-bottom: 10px;
+    line-height: 1.65;
+    margin-bottom: 8px;
 }
 
 .clause-impact {
@@ -660,8 +666,143 @@ body {
     cursor: not-allowed;
 }
 
+/* Insight Chips */
+.insight-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 18px 0 14px 0;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.insight-chip {
+    padding: 9px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.insight-chip:hover {
+    background-color: var(--bg-tertiary);
+    border-color: #ccc;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.insight-chip.active {
+    background-color: #3B82F6;
+    border-color: #3B82F6;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+/* Insight Panels */
+.insight-panel {
+    padding: 16px 18px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.12);
+    border-radius: 10px;
+    margin: 12px 0 18px 0;
+    animation: panelSlideIn 0.2s ease-out;
+}
+
+@keyframes panelSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.insight-panel-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #3B82F6;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.insight-panel-content {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Clause Interaction Buttons */
+.clause-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+}
+
+.clause-action-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.clause-action-btn:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-color: #ccc;
+}
+
+.clause-action-btn.active {
+    background-color: var(--text-primary);
+    color: var(--bg-secondary);
+    border-color: var(--text-primary);
+}
+
+/* Collapsible Clause Details */
+.clause-detail-hidden {
+    display: none;
+}
+
+.clause-detail-visible {
+    display: block;
+    margin-top: 14px;
+    padding: 14px 16px;
+    background-color: var(--bg-tertiary);
+    border-radius: 8px;
+    animation: detailFadeIn 0.2s ease-out;
+}
+
+@keyframes detailFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .footer {
-    padding: 16px 28px;
+    padding: 14px 28px;
     text-align: center;
     font-size: 11px;
     color: var(--text-muted);
@@ -672,4 +813,5 @@ body {
 
 #view-results {
     gap: 0;
+    padding-bottom: 0;
 }

@@ -112,6 +112,9 @@ function getRiskDefinition(riskLevel, riskScore) {
 }
 
 function renderResults(data) {
+    // Store data for insight interactions
+    window.analysisData = data;
+
     // Overall Risk
     overallRiskEl.textContent = data.overall_risk;
     overallRiskEl.className = `badge badge-${data.overall_risk.toLowerCase()}`;
@@ -151,38 +154,47 @@ function renderResults(data) {
         riskPatternsListEl.appendChild(li);
     }
 
-    // Flagged Clauses (backend uses "flags")
-    clausesListEl.innerHTML = '';
+    // Populate insight panels
     const clauses = data.flags || data.flagged_clauses || [];
 
+    // Biggest risk - find highest risk clause
+    const highRiskClause = clauses.find(c => c.risk_level === 'HIGH') || clauses[0];
+    const biggestRiskEl = document.getElementById('biggest-risk-content');
+    if (biggestRiskEl && highRiskClause) {
+        biggestRiskEl.textContent = `${highRiskClause.category}: ${highRiskClause.simple_explanation || highRiskClause.explanation}`;
+    }
+
+    // Financial impact - find clauses with money-related keywords
+    const financialKeywords = ['payment', 'fee', 'cost', 'charge', 'money', 'refund', 'cancel', 'subscription', 'billing'];
+    const financialClauses = clauses.filter(c => {
+        const text = (c.explanation + c.user_impact).toLowerCase();
+        return financialKeywords.some(kw => text.includes(kw));
+    });
+    const financialEl = document.getElementById('financial-impact-content');
+    if (financialEl) {
+        if (financialClauses.length > 0) {
+            financialEl.textContent = financialClauses.map(c => c.user_impact).join(' ');
+        } else {
+            financialEl.textContent = 'No direct financial impact clauses detected in this analysis.';
+        }
+    }
+
+    // Flagged Clauses with collapsible details
+    clausesListEl.innerHTML = '';
+
     if (clauses.length > 0) {
-        clauses.forEach(clause => {
+        clauses.forEach((clause, idx) => {
             const li = document.createElement('li');
             li.className = 'clause-card';
 
-            // Build tags HTML if available
+            // Core visible content
             let tagsHtml = '';
             if (clause.tags && clause.tags.length > 0) {
                 tagsHtml = `<div class="clause-tags">${clause.tags.map(t => `<span class="clause-tag">${escapeHtml(t)}</span>`).join('')}</div>`;
             }
 
-            // Build action tip HTML if available
-            let actionTipHtml = '';
-            if (clause.action_tip) {
-                actionTipHtml = `<p class="clause-action-tip"><span class="clause-action-label">💡 Tip:</span> ${escapeHtml(clause.action_tip)}</p>`;
-            }
-
-            // Build example scenario HTML if available
-            let exampleHtml = '';
-            if (clause.example_scenario) {
-                exampleHtml = `<p class="clause-example"><span class="clause-example-label">Example:</span> ${escapeHtml(clause.example_scenario)}</p>`;
-            }
-
-            // View in document button (only for page analysis)
-            let viewBtnHtml = '';
-            if (lastAnalysisType === 'page' && clause.clause) {
-                viewBtnHtml = `<button class="btn-view-clause" data-clause="${escapeHtml(clause.clause)}" data-risk="${clause.risk_level}">View in document</button>`;
-            }
+            // Hidden details (revealed on click)
+            const detailId = `clause-detail-${idx}`;
 
             li.innerHTML = `
                 <div class="clause-header">
@@ -190,11 +202,14 @@ function renderResults(data) {
                     <span class="badge badge-${clause.risk_level.toLowerCase()}">${clause.risk_level}</span>
                 </div>
                 <p class="clause-explanation">${escapeHtml(clause.simple_explanation || clause.explanation)}</p>
-                <p class="clause-impact"><span class="clause-impact-label">Possible impact:</span> ${escapeHtml(clause.user_impact)}</p>
-                ${exampleHtml}
-                ${actionTipHtml}
                 ${tagsHtml}
-                ${viewBtnHtml}
+                <div class="clause-actions">
+                    <button class="clause-action-btn" data-action="why" data-idx="${idx}">Why risky?</button>
+                    <button class="clause-action-btn" data-action="example" data-idx="${idx}">Example</button>
+                    <button class="clause-action-btn" data-action="tip" data-idx="${idx}">What to do</button>
+                    ${lastAnalysisType === 'page' && clause.clause ? `<button class="clause-action-btn btn-view-clause" data-clause="${escapeHtml(clause.clause)}" data-risk="${clause.risk_level}">Find in page</button>` : ''}
+                </div>
+                <div id="${detailId}" class="clause-detail clause-detail-hidden"></div>
             `;
             clausesListEl.appendChild(li);
         });
@@ -207,35 +222,107 @@ function renderResults(data) {
 
     showView('view-results');
 
-    // Add click handlers for "View in document" buttons
-    document.querySelectorAll('.btn-view-clause').forEach(btn => {
+    // Insight chip click handlers
+    document.querySelectorAll('.insight-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const target = chip.getAttribute('data-target');
+            const panel = document.getElementById(target);
+
+            if (target === 'give-up-section') {
+                // Scroll to give up section
+                document.getElementById('give-up-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return;
+            }
+
+            if (panel) {
+                const isHidden = panel.classList.contains('hidden');
+                // Hide all panels first
+                document.querySelectorAll('.insight-panel').forEach(p => p.classList.add('hidden'));
+                document.querySelectorAll('.insight-chip').forEach(c => c.classList.remove('active'));
+
+                if (isHidden) {
+                    panel.classList.remove('hidden');
+                    chip.classList.add('active');
+                }
+            }
+        });
+    });
+
+    // Clause action button handlers
+    document.querySelectorAll('.clause-action-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
+            const action = btn.getAttribute('data-action');
+            const idx = btn.getAttribute('data-idx');
             const clauseText = btn.getAttribute('data-clause');
             const riskLevel = btn.getAttribute('data-risk');
-            if (!clauseText) return;
 
-            try {
-                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-                if (!tab?.id) return;
+            // Handle "Find in page" button
+            if (clauseText) {
+                try {
+                    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                    if (!tab?.id) return;
 
-                const response = await chrome.tabs.sendMessage(tab.id, {
-                    type: 'HIGHLIGHT_CLAUSE',
-                    clauseText: clauseText,
-                    riskLevel: riskLevel
-                });
+                    const response = await chrome.tabs.sendMessage(tab.id, {
+                        type: 'HIGHLIGHT_CLAUSE',
+                        clauseText: clauseText,
+                        riskLevel: riskLevel
+                    });
 
-                if (!response?.found) {
-                    btn.textContent = 'Could not locate';
+                    if (!response?.found) {
+                        btn.textContent = 'Not found';
+                        btn.disabled = true;
+                        setTimeout(() => {
+                            btn.textContent = 'Find in page';
+                            btn.disabled = false;
+                        }, 2000);
+                    }
+                } catch (error) {
+                    btn.textContent = 'Unavailable';
                     btn.disabled = true;
-                    setTimeout(() => {
-                        btn.textContent = 'View in document';
-                        btn.disabled = false;
-                    }, 3000);
                 }
-            } catch (error) {
-                // Content script not available on this page
-                btn.textContent = 'Not available';
-                btn.disabled = true;
+                return;
+            }
+
+            // Handle clause detail buttons
+            if (action && idx !== null && window.analysisData) {
+                const clauses = window.analysisData.flags || window.analysisData.flagged_clauses || [];
+                const clause = clauses[parseInt(idx)];
+                if (!clause) return;
+
+                const detailEl = document.getElementById(`clause-detail-${idx}`);
+                if (!detailEl) return;
+
+                let content = '';
+                switch (action) {
+                    case 'why':
+                        content = `<strong>Why this is risky:</strong> ${escapeHtml(clause.user_impact)}`;
+                        break;
+                    case 'example':
+                        content = clause.example_scenario
+                            ? `<strong>Example scenario:</strong> ${escapeHtml(clause.example_scenario)}`
+                            : 'No example scenario available.';
+                        break;
+                    case 'tip':
+                        content = clause.action_tip
+                            ? `<strong>💡 What you can do:</strong> ${escapeHtml(clause.action_tip)}`
+                            : 'No specific action tip available.';
+                        break;
+                }
+
+                // Toggle visibility
+                const isVisible = detailEl.classList.contains('clause-detail-visible');
+                if (isVisible && detailEl.innerHTML.includes(action)) {
+                    detailEl.classList.remove('clause-detail-visible');
+                    detailEl.classList.add('clause-detail-hidden');
+                    btn.classList.remove('active');
+                } else {
+                    detailEl.innerHTML = `<p style="margin-top: 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.5;">${content}</p>`;
+                    detailEl.classList.remove('clause-detail-hidden');
+                    detailEl.classList.add('clause-detail-visible');
+                    // Update button states
+                    btn.parentElement.querySelectorAll('.clause-action-btn[data-action]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                }
             }
         });
     });

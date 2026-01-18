@@ -60,7 +60,24 @@
 
             <section id="view-results" class="view hidden">
 
-                <div class="results-section results-section-primary">
+                <!-- Insight Chips -->
+                <div class="insight-chips">
+                    <button class="insight-chip" data-target="give-up-section">What could I lose?</button>
+                    <button class="insight-chip" data-target="biggest-risk">Biggest risk here</button>
+                    <button class="insight-chip" data-target="financial-impact">Can this affect my money?</button>
+                </div>
+
+                <!-- Expandable Insight Panels -->
+                <div id="biggest-risk" class="insight-panel hidden">
+                    <h3 class="insight-panel-title">Biggest Risk</h3>
+                    <p id="biggest-risk-content" class="insight-panel-content"></p>
+                </div>
+                <div id="financial-impact" class="insight-panel hidden">
+                    <h3 class="insight-panel-title">Financial Impact</h3>
+                    <p id="financial-impact-content" class="insight-panel-content"></p>
+                </div>
+
+                <div id="give-up-section" class="results-section results-section-primary">
                     <h2 class="section-heading-large">What You May Give Up by Clicking Agree</h2>
                     <p class="section-helper">These reflect potential impact if terms are enforced as written.</p>
                     <ul id="give-up-list" class="give-up-list">
