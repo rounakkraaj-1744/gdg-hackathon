@@ -9,7 +9,14 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
 /backend/venv/
+*.egg-info/
+.eggs/
+dist/
+build/
 
 # Node
 node_modules/
@@ -17,3 +24,17 @@ node_modules/
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Artifacts
+/brain/
+.gemini/
