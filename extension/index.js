@@ -20,6 +20,8 @@ const viewError = document.getElementById('view-error');
 const viewResults = document.getElementById('view-results');
 const btnAnalyzePage = document.getElementById('btn-analyze-page');
 const btnAnalyzeText = document.getElementById('btn-analyze-text');
+const btnAnalyzePdf = document.getElementById('btn-analyze-pdf');
+const pdfInput = document.getElementById('pdf-input');
 const btnRetry = document.getElementById('btn-retry');
 const btnNewAnalysis = document.getElementById('btn-new-analysis');
 const textInput = document.getElementById('text-input');
@@ -32,6 +34,7 @@ const clausesListEl = document.getElementById('clauses-list');
 
 let lastAnalysisType = null;
 let lastAnalysisText = null;
+let lastPdfFile = null;
 
 function showView(viewId) {
     viewInput.classList.add('hidden');
@@ -54,6 +57,23 @@ async function analyzeText(text) {
     return await response.json();
 }
 
+async function analyzePdf(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/analyze-pdf/`, {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.detail || `API error: ${response.status}`);
+    }
+
+    return await response.json();
+}
+
 async function getPageContent() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -62,7 +82,7 @@ async function getPageContent() {
 
     const results = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        func: () => document.body.innerText || document.body.textContent || '',
+        func: () => document.body?.innerText || document.documentElement?.innerText || '',
     });
 
     if (!results || results.length === 0 || !results[0].result)
@@ -236,7 +256,50 @@ btnRetry.addEventListener('click', async () => {
 
 btnNewAnalysis.addEventListener('click', () => {
     textInput.value = '';
+    pdfInput.value = '';
     lastAnalysisType = null;
     lastAnalysisText = null;
+    lastPdfFile = null;
     showView('view-input');
 });
+
+// PDF Upload Handlers
+btnAnalyzePdf.addEventListener('click', () => {
+    pdfInput.click();
+});
+
+pdfInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    lastAnalysisType = 'pdf';
+    lastPdfFile = file;
+
+    // Update loading text for PDF
+    const statusText = document.querySelector('#view-loading .status-text');
+    if (statusText) statusText.textContent = 'Analyzing PDF agreement…';
+
+    showView('view-loading');
+
+    try {
+        const data = await analyzePdf(file);
+        renderResults(data);
+    } catch (error) {
+        showPdfError(error.message);
+    }
+});
+
+function showPdfError(message) {
+    const errorText = document.querySelector('#view-error .status-text');
+    const errorSubtext = document.querySelector('#view-error .status-subtext');
+
+    if (message.includes('does not contain readable text') || message.includes('scanned')) {
+        if (errorText) errorText.textContent = 'This PDF appears to be scanned or protected.';
+        if (errorSubtext) errorSubtext.textContent = 'Text extraction is not supported. Please paste the text manually.';
+    } else {
+        if (errorText) errorText.textContent = 'Something went wrong.';
+        if (errorSubtext) errorSubtext.textContent = 'The document could not be analyzed. Please try again.';
+    }
+
+    showView('view-error');
+}

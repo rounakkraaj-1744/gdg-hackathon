@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.analyze import router as analyze_router
+from routers.analyze_pdf import router as analyze_pdf_router
 
 app = FastAPI(title="T&C Risk Analyzer API")
 
@@ -15,6 +16,7 @@ app.add_middleware(
 
 # Register routes
 app.include_router(analyze_router)
+app.include_router(analyze_pdf_router)
 
 
 @app.get("/")
