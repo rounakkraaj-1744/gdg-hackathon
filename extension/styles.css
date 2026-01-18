@@ -639,6 +639,27 @@ body {
     letter-spacing: 0.3px;
 }
 
+.btn-view-clause {
+    margin-top: 10px;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.btn-view-clause:hover {
+    background-color: var(--border-color);
+}
+
+.btn-view-clause:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .footer {
     padding: 16px 28px;
     text-align: center;

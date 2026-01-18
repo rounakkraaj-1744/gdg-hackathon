@@ -178,6 +178,12 @@ function renderResults(data) {
                 exampleHtml = `<p class="clause-example"><span class="clause-example-label">Example:</span> ${escapeHtml(clause.example_scenario)}</p>`;
             }
 
+            // View in document button (only for page analysis)
+            let viewBtnHtml = '';
+            if (lastAnalysisType === 'page' && clause.clause) {
+                viewBtnHtml = `<button class="btn-view-clause" data-clause="${escapeHtml(clause.clause)}" data-risk="${clause.risk_level}">View in document</button>`;
+            }
+
             li.innerHTML = `
                 <div class="clause-header">
                     <span class="clause-category">${escapeHtml(clause.category)}</span>
@@ -188,6 +194,7 @@ function renderResults(data) {
                 ${exampleHtml}
                 ${actionTipHtml}
                 ${tagsHtml}
+                ${viewBtnHtml}
             `;
             clausesListEl.appendChild(li);
         });
@@ -199,6 +206,39 @@ function renderResults(data) {
     }
 
     showView('view-results');
+
+    // Add click handlers for "View in document" buttons
+    document.querySelectorAll('.btn-view-clause').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const clauseText = btn.getAttribute('data-clause');
+            const riskLevel = btn.getAttribute('data-risk');
+            if (!clauseText) return;
+
+            try {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (!tab?.id) return;
+
+                const response = await chrome.tabs.sendMessage(tab.id, {
+                    type: 'HIGHLIGHT_CLAUSE',
+                    clauseText: clauseText,
+                    riskLevel: riskLevel
+                });
+
+                if (!response?.found) {
+                    btn.textContent = 'Could not locate';
+                    btn.disabled = true;
+                    setTimeout(() => {
+                        btn.textContent = 'View in document';
+                        btn.disabled = false;
+                    }, 3000);
+                }
+            } catch (error) {
+                // Content script not available on this page
+                btn.textContent = 'Not available';
+                btn.disabled = true;
+            }
+        });
+    });
 }
 
 async function handleAnalysis(text, type) {
