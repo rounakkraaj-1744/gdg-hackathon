@@ -1,4 +1,4 @@
-# 🚩 RedFlags
+# RedFlags
 
 > AI-powered agreement analyzer that helps you understand what you're really agreeing to.
 
@@ -6,7 +6,7 @@ RedFlags is a Chrome extension that analyzes Terms & Conditions, Privacy Policie
 
 ---
 
-## ✨ Features
+## Features
 
 - **One-Click Analysis** — Analyze any webpage's terms & conditions instantly
 - **PDF Upload** — Upload job contracts and other PDF agreements for analysis
@@ -18,7 +18,7 @@ RedFlags is a Chrome extension that analyzes Terms & Conditions, Privacy Policie
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **FastAPI** — Python web framework
@@ -32,7 +32,7 @@ RedFlags is a Chrome extension that analyzes Terms & Conditions, Privacy Policie
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Python 3.11+
@@ -68,7 +68,7 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-## 📖 Usage
+## Usage
 
 ### Analyze a Webpage
 1. Navigate to any Terms & Conditions or Privacy Policy page
@@ -90,7 +90,7 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 gdg-hackathon/
@@ -116,7 +116,7 @@ gdg-hackathon/
 
 ---
 
-## 🔒 API Endpoints
+## API Endpoints
 
 ### POST `/analyze/`
 Analyze plain text agreement.
@@ -159,20 +159,14 @@ Analyze PDF document.
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 RedFlags provides educational insights about potential risks in agreements. It is **not legal advice** and does not replace professional legal consultation. The risk assessments reflect potential impact if terms are enforced as written — not judgments of legality or fairness.
 
 ---
 
-## 📄 License
-
-MIT License — feel free to use, modify, and distribute.
-
----
-
-## 🏆 Hackathon
+## Hackathon
 
 Built for the **Google Developer Group Hackathon 2026**.
 
-Made with ❤️ by [Rounak](https://github.com/rounakkraaj-1744)
+Made with ❤️ by [Rounakk](https://github.com/rounakkraaj-1744) and [Shivam](https://github.com/shivam4511)
