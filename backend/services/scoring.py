@@ -9,6 +9,12 @@ def calculate_risk_score(analyzed_clauses: List[AnalyzedClause]) -> int:
     total_score = 0
     max_score = len(analyzed_clauses) * 3 if analyzed_clauses else 1
 
+    # NEW: Check strictly for any flags (HIGH/MEDIUM). If none, risk score is 0.
+    # The user requested: "if nothing detected ... risk score to 0"
+    has_flagged_risks = any(c.risk_level in ["HIGH", "MEDIUM"] for c in analyzed_clauses)
+    if not has_flagged_risks:
+        return 0
+
     for clause in analyzed_clauses:
         if clause.risk_level == "HIGH":
             total_score += 3
