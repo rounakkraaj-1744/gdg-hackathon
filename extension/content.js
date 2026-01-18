@@ -1,5 +1,100 @@
 // RedFlags Content Script
-// Listens for messages from the popup to highlight clauses on the page
+// Handles clause highlighting and shows agreement detection notification
+
+// =====================
+// AGREEMENT DETECTION
+// =====================
+
+const LEGAL_KEYWORDS = [
+    'terms', 'privacy', 'policy', 'agreement', 'legal',
+    'tos', 'eula', 'conditions', 'consent', 'cookie'
+];
+
+function isLegalAgreementPage() {
+    const url = window.location.href.toLowerCase();
+    const title = document.title.toLowerCase();
+    return LEGAL_KEYWORDS.some(kw => url.includes(kw) || title.includes(kw));
+}
+
+function showAgreementNotification() {
+    // Don't show if already shown or dismissed
+    if (document.getElementById('redflags-notification')) return;
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.id = 'redflags-notification';
+    notification.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+            max-width: 320px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 2147483647;
+            animation: rfSlideIn 0.3s ease-out;
+        ">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <span style="font-size: 18px;">⚠️</span>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; margin-bottom: 4px;">Legal Agreement Detected</div>
+                    <div style="color: #aaa; font-size: 12px;">Click the RedFlags extension to analyze this page before agreeing.</div>
+                </div>
+                <button id="redflags-dismiss" style="
+                    background: none;
+                    border: none;
+                    color: #666;
+                    cursor: pointer;
+                    font-size: 18px;
+                    padding: 0;
+                    line-height: 1;
+                ">×</button>
+            </div>
+        </div>
+        <style>
+            @keyframes rfSlideIn {
+                from { opacity: 0; transform: translateX(20px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+            @keyframes rfSlideOut {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(20px); }
+            }
+        </style>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Dismiss button
+    document.getElementById('redflags-dismiss').addEventListener('click', () => {
+        notification.querySelector('div').style.animation = 'rfSlideOut 0.2s ease-in forwards';
+        setTimeout(() => notification.remove(), 200);
+    });
+
+    // Auto-dismiss after 8 seconds
+    setTimeout(() => {
+        if (document.getElementById('redflags-notification')) {
+            notification.querySelector('div').style.animation = 'rfSlideOut 0.2s ease-in forwards';
+            setTimeout(() => notification.remove(), 200);
+        }
+    }, 8000);
+}
+
+// Show notification if legal agreement detected
+if (isLegalAgreementPage()) {
+    // Small delay to let page settle
+    setTimeout(showAgreementNotification, 1000);
+}
+
+// =====================
+// CLAUSE HIGHLIGHTING
+// =====================
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'HIGHLIGHT_CLAUSE') {
@@ -9,39 +104,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
 });
 
-// Risk-based highlight colors
 const HIGHLIGHT_COLORS = {
-    HIGH: 'rgba(255, 100, 100, 0.25)',    // Red
-    MEDIUM: 'rgba(255, 200, 50, 0.3)',    // Yellow/Amber
-    LOW: 'rgba(100, 200, 100, 0.25)'      // Green
+    HIGH: 'rgba(255, 100, 100, 0.25)',
+    MEDIUM: 'rgba(255, 200, 50, 0.3)',
+    LOW: 'rgba(100, 200, 100, 0.25)'
 };
 
-/**
- * Attempts to find and highlight a clause on the page.
- * Uses multiple matching strategies for best-effort matching.
- */
 function highlightClauseOnPage(clauseText, riskLevel) {
     if (!clauseText || clauseText.length < 15) return false;
 
-    // Normalize text for matching
     const normalizedClause = clauseText.replace(/\s+/g, ' ').trim().toLowerCase();
-
-    // Try multiple anchor lengths for flexible matching
     const anchorLengths = [60, 40, 25, 15];
 
     for (const len of anchorLengths) {
         if (normalizedClause.length < len) continue;
-
         const anchor = normalizedClause.substring(0, len);
         const matchNode = findTextNodeContaining(anchor);
-
         if (matchNode) {
             scrollAndHighlight(matchNode, riskLevel);
             return true;
         }
     }
 
-    // Try matching any significant word sequence (last resort)
     const words = normalizedClause.split(' ').filter(w => w.length > 4);
     if (words.length >= 3) {
         const wordAnchor = words.slice(0, 4).join(' ');
@@ -55,52 +139,29 @@ function highlightClauseOnPage(clauseText, riskLevel) {
     return false;
 }
 
-/**
- * Searches for a text node containing the anchor string.
- */
 function findTextNodeContaining(anchor) {
-    const walker = document.createTreeWalker(
-        document.body,
-        NodeFilter.SHOW_TEXT,
-        null,
-        false
-    );
-
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
     let node;
     while ((node = walker.nextNode())) {
         const text = node.textContent.replace(/\s+/g, ' ').toLowerCase();
-        if (text.includes(anchor)) {
-            return node;
-        }
+        if (text.includes(anchor)) return node;
     }
     return null;
 }
 
-/**
- * Scrolls to and highlights the parent element of a text node.
- * Uses risk-level-based colors.
- */
 function scrollAndHighlight(textNode, riskLevel) {
     const parentElement = textNode.parentElement;
     if (!parentElement) return;
 
-    // Scroll into view
-    parentElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-    });
+    parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // Get highlight color based on risk level
     const highlightColor = HIGHLIGHT_COLORS[riskLevel] || HIGHLIGHT_COLORS.HIGH;
-
-    // Apply temporary highlight
     const originalBackground = parentElement.style.backgroundColor;
     const originalTransition = parentElement.style.transition;
 
     parentElement.style.transition = 'background-color 0.3s ease';
     parentElement.style.backgroundColor = highlightColor;
 
-    // Remove highlight after 5 seconds
     setTimeout(() => {
         parentElement.style.backgroundColor = originalBackground;
         setTimeout(() => {
