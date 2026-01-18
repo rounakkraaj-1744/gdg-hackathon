@@ -4,15 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Red Flag Scanner</title>
+    <title>RedFlags</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <div class="popup">
+    <!-- Splash Screen -->
+    <div id="splash" class="splash">
+        <div class="splash-content">
+            <div class="splash-logo-container">
+                <img src="icons/logo.jpeg" alt="RedFlags" class="splash-logo">
+                <div class="splash-ring"></div>
+            </div>
+            <p class="splash-text">Identifying potential risks…</p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="popup app-hidden">
         <header class="header">
-            <h1 class="title">Red Flag Scanner</h1>
-            <p class="subtitle">Terms & Conditions risk awareness tool</p>
+            <div class="header-brand">
+                <img src="icons/logo.jpeg" alt="RedFlags" class="header-logo">
+                <div class="header-text">
+                    <h1 class="title">RedFlags</h1>
+                    <p class="subtitle">Terms & Conditions risk awareness tool</p>
+                </div>
+            </div>
         </header>
 
         <main class="main">
@@ -24,11 +41,12 @@
             </section>
 
             <section id="view-loading" class="view view-center hidden">
+                <img src="icons/logo.jpeg" alt="" class="loading-logo">
                 <div class="progress-bar">
                     <div class="progress-bar-indeterminate"></div>
                 </div>
                 <p class="status-text">Reading document…</p>
-                <p class="status-subtext">This may take a moment</p>
+                <p class="loading-context">Risk reflects potential impact if enforced — not legality or fairness.</p>
             </section>
 
             <section id="view-error" class="view view-center hidden">
@@ -78,6 +96,7 @@
 
         <footer class="footer">Internal Compliance Tool v1.0</footer>
     </div>
+
     <script src="index.js"></script>
 </body>
 

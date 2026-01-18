@@ -1,3 +1,17 @@
+// Splash Screen
+(function () {
+    const splash = document.getElementById('splash');
+    const app = document.getElementById('app');
+
+    setTimeout(() => {
+        splash.classList.add('splash-hidden');
+        app.classList.remove('app-hidden');
+        app.classList.add('app-visible');
+
+        setTimeout(() => splash.remove(), 400);
+    }, 1800);
+})();
+
 const API_BASE_URL = 'http://localhost:8000';
 
 const viewInput = document.getElementById('view-input');

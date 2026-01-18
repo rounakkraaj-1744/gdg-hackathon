@@ -38,17 +38,164 @@ body {
     overflow: hidden;
 }
 
+/* Splash Screen */
+.splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: opacity 400ms ease-out;
+}
+
+.splash.splash-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.splash-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.splash-logo-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.splash-logo {
+    width: 96px;
+    height: 96px;
+    border-radius: 20px;
+    object-fit: cover;
+    animation: splashLogoIn 500ms ease-out both;
+    position: relative;
+    z-index: 2;
+}
+
+@keyframes splashLogoIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.splash-ring {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border: 2px solid var(--border-color);
+    border-radius: 26px;
+    animation: splashRingIn 600ms ease-out 200ms both;
+}
+
+@keyframes splashRingIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+}
+
+.splash-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    animation: splashTextIn 400ms ease-out 300ms both;
+}
+
+@keyframes splashTextIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* App visibility */
+.app-hidden {
+    opacity: 0;
+}
+
+.app-visible {
+    opacity: 1;
+    transition: opacity 400ms ease-out;
+}
+
 .popup {
     display: flex;
     flex-direction: column;
     height: 600px;
 }
 
+@keyframes appFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
 .header {
-    padding: 24px 28px;
+    padding: 20px 28px;
     border-bottom: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
     flex-shrink: 0;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.header-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: cover;
+    animation: logoSettle 800ms ease-out both;
+}
+
+@keyframes logoSettle {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .title {
@@ -216,6 +363,36 @@ body {
     font-size: 13px;
     color: var(--text-tertiary);
     margin-top: 6px;
+}
+
+.loading-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    margin-bottom: 16px;
+    animation: loadingLogoFadeIn 600ms ease-out both;
+}
+
+@keyframes loadingLogoFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.loading-context {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 20px;
+    max-width: 260px;
+    text-align: center;
+    line-height: 1.5;
 }
 
 .progress-bar {
